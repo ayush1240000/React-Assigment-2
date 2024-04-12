@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
 import axios from 'axios';
+import { Button, Table } from 'react-bootstrap';
 
 function App() {
   const [records, setRecords] = useState([]);
   const [tempRecord, setTempRecord] = useState({ title: '', body: '' });
+  const [editingIndex, setEditingIndex] = useState(null);
 
   useEffect(() => {
     axios.get('https://jsonplaceholder.typicode.com/posts').then((res) => setRecords(res.data));
@@ -20,9 +22,30 @@ function App() {
 
   const handleAddRecord = () => {
     if (tempRecord.title.trim() !== '' && tempRecord.body.trim() !== '') {
-      setRecords((prevRecords) => [ tempRecord,...prevRecords]);
+      setRecords((prevRecords) => [tempRecord, ...prevRecords]);
       setTempRecord({ title: '', body: '' });
     }
+  };
+
+  const handleUpdateRecord = (index) => {
+    if (tempRecord.title.trim() !== '' && tempRecord.body.trim() !== '') {
+      const updatedRecords = [...records];
+      updatedRecords[index] = tempRecord;
+      setRecords(updatedRecords);
+      setTempRecord({ title: '', body: '' });
+      setEditingIndex(null);
+    }
+  };
+
+  const handleEditClick = (index) => {
+    setEditingIndex(index);
+    setTempRecord(records[index]);
+  };
+
+  const handleDelete = (index) => {
+    const updatedRecords = [...records];
+    updatedRecords.splice(index, 1);
+    setRecords(updatedRecords);
   };
 
   return (
@@ -33,6 +56,7 @@ function App() {
             <label htmlFor="title">Title</label>
             <input
               type="text"
+              className="form-control"
               id="title"
               placeholder="Enter title"
               name="title"
@@ -44,6 +68,7 @@ function App() {
           <div className="form-group">
             <label htmlFor="body">Body</label>
             <textarea
+              className="form-control"
               id="body"
               rows={3}
               placeholder="Enter body"
@@ -53,44 +78,58 @@ function App() {
             />
           </div>
 
-          <button type="button" onClick={handleAddRecord}>
+          <Button variant="primary" onClick={handleAddRecord}>
             Add Record
-          </button>
+          </Button>
         </form>
-{/* 
-        <h3>Temporary Record</h3>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Body</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{tempRecord.title}</td>
-              <td>{tempRecord.body}</td>
-            </tr>
-          </tbody>
-        </table> */}
-
         <h3>Permanent Records</h3>
-        <table className="table">
+        <Table striped bordered hover>
           <thead>
             <tr>
               <th>Title</th>
               <th>Body</th>
+
+              <th>Delete</th>
             </tr>
           </thead>
           <tbody>
-            {records.slice(0,10).map((record, index) => (
+            {records.map((record, index) => (
               <tr key={index}>
-                <td>{record.title}</td>
-                <td>{record.body}</td>
+                <td onClick={() => handleEditClick(index)}>
+                  {editingIndex === index ? (
+                    <input
+                      type="text"
+                      value={tempRecord.title}
+                      name="title"
+                      onChange={handleInputChange}
+                      onBlur={() => handleUpdateRecord(index)}
+                    />
+                  ) : (
+                    record.title
+                  )}
+                </td>
+                <td onClick={() => handleEditClick(index)}>
+                  {editingIndex === index ? (
+                    <textarea
+                      rows="3"
+                      value={tempRecord.body}
+                      name="body"
+                      onChange={handleInputChange}
+                      onBlur={() => handleUpdateRecord(index)}
+                    />
+                  ) : (
+                    record.body
+                  )}
+                </td>
+                <td>
+                  <Button variant="danger" onClick={() => handleDelete(index)}>
+                    Delete
+                  </Button>
+                </td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
       </div>
     </>
   );
