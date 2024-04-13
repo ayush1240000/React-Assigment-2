@@ -42,12 +42,20 @@ function App() {
     setTempRecord(records[index]);
   };
 
-  const handleDelete = (index) => {
-    const updatedRecords = [...records];
-    updatedRecords.splice(index, 1);
-    setRecords(updatedRecords);
-  };
+  
+  // const handleDelete = (index) => {
+  //   const updatedRecords = [...records];
+  //   updatedRecords.splice(index, 1);
+  //   setRecords(updatedRecords);
+  // };
 
+  function handleDelete(index) {
+    axios.delete(`https://jsonplaceholder.typicode.com/posts/${index}`).then(res => {
+        const updatedRecords = [...records];
+        updatedRecords.splice(index, 1);
+        setRecords(updatedRecords);
+    })
+}
   return (
     <>
       <div className="container">
