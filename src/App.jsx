@@ -22,124 +22,124 @@ function App() {
 
   const handleAddRecord = () => {
     if (tempRecord.title.trim() !== '' && tempRecord.body.trim() !== '') {
-      setRecords((prevRecords) => [tempRecord, ...prevRecords]);
-      setTempRecord({ title: '', body: '' });
+      axios.post('https://jsonplaceholder.typicode.com/posts', tempRecord)
+        .then((res) => {
+          setRecords([res.data, ...records]);
+          setTempRecord({ title: '', body: '' });
+        })
+        .catch((error) => console.error('Error adding record:', error));
     }
   };
 
-  const handleUpdateRecord = (index) => {
-    if (tempRecord.title.trim() !== '' && tempRecord.body.trim() !== '') {
-      const updatedRecords = [...records];
-      updatedRecords[index] = tempRecord;
-      setRecords(updatedRecords);
-      setTempRecord({ title: '', body: '' });
-      setEditingIndex(null);
-    }
-  };
-
-  const handleEditClick = (index) => {
+  const handleEditClick = (index, id) => {
     setEditingIndex(index);
-    setTempRecord(records[index]);
+    axios.get(`https://jsonplaceholder.typicode.com/posts/${id}`)
+      .then((res) => setTempRecord(res.data))
+      .catch((error) => console.error('Error fetching record for editing:', error));
   };
 
-  
-  // const handleDelete = (index) => {
-  //   const updatedRecords = [...records];
-  //   updatedRecords.splice(index, 1);
-  //   setRecords(updatedRecords);
-  // };
-
-  function handleDelete(index) {
-    axios.delete(`https://jsonplaceholder.typicode.com/posts/${index}`).then(res => {
+  const handleUpdateRecord = (index, id) => {
+    axios.put(`https://jsonplaceholder.typicode.com/posts/${id}`, tempRecord)
+      .then((res) => {
         const updatedRecords = [...records];
-        updatedRecords.splice(index, 1);
+        updatedRecords[index] = res.data;
         setRecords(updatedRecords);
-    })
-}
+        setTempRecord({ title: '', body: '' });
+        setEditingIndex(null);
+      })
+      .catch((error) => console.error('Error updating record:', error));
+  };
+
+  const handleDelete = (id) => {
+    axios.delete(`https://jsonplaceholder.typicode.com/posts/${id}`)
+      .then(() => {
+        const updatedRecords = records.filter(record => record.id !== id);
+        setRecords(updatedRecords);
+      })
+      .catch((error) => console.error('Error deleting record:', error));
+  };
+
   return (
-    <>
-      <div className="container">
-        <form>
-          <div className="form-group">
-            <label htmlFor="title">Title</label>
-            <input
-              type="text"
-              className="form-control"
-              id="title"
-              placeholder="Enter title"
-              name="title"
-              value={tempRecord.title}
-              onChange={handleInputChange}
-            />
-          </div>
+    <div className="container">
+      <form>
+        <div className="form-group">
+          <label htmlFor="title">Title</label>
+          <input
+            type="text"
+            className="form-control"
+            id="title"
+            placeholder="Enter title"
+            name="title"
+            value={tempRecord.title}
+            onChange={handleInputChange}
+          />
+        </div>
 
-          <div className="form-group">
-            <label htmlFor="body">Body</label>
-            <textarea
-              className="form-control"
-              id="body"
-              rows={3}
-              placeholder="Enter body"
-              name="body"
-              value={tempRecord.body}
-              onChange={handleInputChange}
-            />
-          </div>
+        <div className="form-group">
+          <label htmlFor="body">Body</label>
+          <textarea
+            className="form-control"
+            id="body"
+            rows={3}
+            placeholder="Enter body"
+            name="body"
+            value={tempRecord.body}
+            onChange={handleInputChange}
+          />
+        </div>
 
-          <Button variant="primary" onClick={handleAddRecord}>
-            Add Record
-          </Button>
-        </form>
-        <h3>Permanent Records</h3>
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Body</th>
-
-              <th>Delete</th>
+        <Button variant="primary" onClick={handleAddRecord}>
+          Add Record
+        </Button>
+      </form>
+      <h3>Permanent Records</h3>
+      <Table striped bordered hover>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Body</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.map((record, index) => (
+            <tr key={record.id}>
+              <td onClick={() => handleEditClick(index, record.id)}>
+                {editingIndex === index ? (
+                  <input
+                    type="text"
+                    value={tempRecord.title}
+                    name="title"
+                    onChange={handleInputChange}
+                    onBlur={() => handleUpdateRecord(index, record.id)}
+                  />
+                ) : (
+                  record.title
+                )}
+              </td>
+              <td onClick={() => handleEditClick(index, record.id)}>
+                {editingIndex === index ? (
+                  <textarea
+                    rows="3"
+                    value={tempRecord.body}
+                    name="body"
+                    onChange={handleInputChange}
+                    onBlur={() => handleUpdateRecord(index, record.id)}
+                  />
+                ) : (
+                  record.body
+                )}
+              </td>
+              <td>
+                <Button variant="danger" onClick={() => handleDelete(record.id)}>
+                  Delete
+                </Button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {records.map((record, index) => (
-              <tr key={index}>
-                <td onClick={() => handleEditClick(index)}>
-                  {editingIndex === index ? (
-                    <input
-                      type="text"
-                      value={tempRecord.title}
-                      name="title"
-                      onChange={handleInputChange}
-                      onBlur={() => handleUpdateRecord(index)}
-                    />
-                  ) : (
-                    record.title
-                  )}
-                </td>
-                <td onClick={() => handleEditClick(index)}>
-                  {editingIndex === index ? (
-                    <textarea
-                      rows="3"
-                      value={tempRecord.body}
-                      name="body"
-                      onChange={handleInputChange}
-                      onBlur={() => handleUpdateRecord(index)}
-                    />
-                  ) : (
-                    record.body
-                  )}
-                </td>
-                <td>
-                  <Button variant="danger" onClick={() => handleDelete(index)}>
-                    Delete
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
-    </>
+          ))}
+        </tbody>
+      </Table>
+    </div>
   );
 }
 
